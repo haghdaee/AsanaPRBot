@@ -1,0 +1,16 @@
+{
+  "name": "asana_ai_reviewer",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "asana_ai_reviewer.js",
+  "scripts": {
+    "start": "node asana_ai_reviewer.js"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "^7.1.1",
+    "@octokit/rest": "^21.0.2",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.67.1",
+    "yargs": "^17.7.2"
+  }
+}
