@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
 import yargs from 'yargs';
@@ -43,10 +44,13 @@ const argv = yargs(hideBin(process.argv))
       ? process.env.GITHUB_REPOSITORY.split('/')[1]
       : undefined,
   })
+  .option('openai-org', {
+    type: 'string',
+    description: 'OpenAI Organization ID (optional)',
+  })
   .help()
   .alias('help', 'h')
   .argv;
-
 
 // Main function to process the PR or comment
 (async () => {
@@ -54,6 +58,7 @@ const argv = yargs(hideBin(process.argv))
     prNumber,
     githubToken,
     openaiToken,
+    openaiOrg,
     commentId,
     owner,
     repo,
@@ -61,7 +66,15 @@ const argv = yargs(hideBin(process.argv))
 
   // Authenticate with GitHub
   const octokit = new Octokit({ auth: githubToken });
-  const openai = new OpenAI({ apiKey: openaiToken });
+
+  // Initialize OpenAI client with optional organization ID
+  const openaiConfig = {
+    apiKey: openaiToken,
+  };
+  if (openaiOrg) {
+    openaiConfig.organization = openaiOrg;
+  }
+  const openai = new OpenAI(openaiConfig);
 
   try {
     if (commentId) {
@@ -90,14 +103,14 @@ async function processComment(prNumber, commentId, owner, repo, octokit, openai)
 
   const commentText = comment.body;
 
-  // Check if the comment contains "@AsanaPRBot"
-  if (!commentText.includes('@AsanaPRBot')) {
-    console.log('Comment does not contain @AsanaPRBot. Skipping.');
+  // Check if the comment contains "@ai"
+  if (!commentText.includes('@ai')) {
+    console.log('Comment does not contain @ai. Skipping.');
     return;
   }
 
-  // Extract the instruction after '@AsanaPRBot'
-  const instructionMatch = commentText.match(/@AsanaPRBot\s*(.*)/i);
+  // Extract the instruction after '@ai'
+  const instructionMatch = commentText.match(/@ai\s*(.*)/i);
   const instruction = instructionMatch ? instructionMatch[1].trim() : null;
 
   // Now process the PR with the instruction
@@ -215,7 +228,7 @@ Provide a concise response without unnecessary elaboration or hallucinations.
 
     // Send the prompt to OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "o1-preview",
       messages: [
         { role: "user", content: finalPrompt },
       ],
@@ -224,7 +237,7 @@ Provide a concise response without unnecessary elaboration or hallucinations.
     const aiResponse = completion.choices[0].message.content;
 
     // Introduce the bot and its functionalities
-    const botIntroduction = "👋 Hi, I'm **AsanaPRBot**, your assistant for concise PR reviews.";
+    const botIntroduction = "👋 Hi, I'm **AsanaAIReviewer**, your assistant for concise PR reviews.";
 
     // Post the AI response as a comment on the PR
     await octokit.issues.createComment({

@@ -1,1 +1,0 @@
-web: node fetch_prs.js
